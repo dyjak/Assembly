@@ -1,6 +1,6 @@
-        [bits 32]
+         [bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;        esp -> [ret]
 
 %ifdef COMMENT
 0   1   2   3   4   5   6    indeksy
@@ -8,8 +8,8 @@
 a   b   d
 |---|---|
 1   1   2   3   5   8   13   wartosci
-|---|---|
-a   b   d
+    |---|---|
+    a   b   d
 
 Przesuniecie ramki:
 
@@ -20,70 +20,69 @@ d = a + b  ; d = 1 + 2 = 3
 
 n        equ 3
 
-        mov ebp, ebx  ; ebp = ebx
-        
-        mov ecx, n
-
-        mov eax, 1  ; eax = 1
-        mov ebx, 1  ; ebx = 1
-        mov edx, 2  ; edx = 2
-        
-        cmp ecx, 0  ; ecx - 0
-        jne next1   ; jump if not equal
-        
-        push eax  ; eax -> stack
-        
+         mov ebp, ebx  ; ebp = ebx
+         
+         mov ecx, n  ; ecx = n
+         
+         mov eax, 1  ; eax = 1
+         mov ebx, 1  ; ebx = 1
+         mov edx, 2  ; edx = 2
+         
+         cmp ecx, 0  ; ecx - 0           ; OF SF ZF AF PF CF affected
+         jne next1   ; jump if not equal ; ZF = 0
+         
+         push eax  ; eax -> stack
+         
 ;        esp -> [eax][ret]
 
-        jmp done
-        
-next1    cmp ecx, 1  ; ecx - 1
-        jne next2   ; jump if not equal
-        
-        push ebx  ; ebx -> stack
-        
-;        esp -> [eax][ret]
+         jmp done
+         
+next1    cmp ecx, 1  ; ecx - 1           ; OF SF ZF AF PF CF affected
+         jne next2   ; jump if not equal ; ZF = 0
+         
+         push ebx  ; ebx -> stack
 
-        jmp done
+;        esp -> [ebx][ret]
 
-next2    cmp ecx, 2  ; edc - 2
-        jne next3   ; jump if not equal
-
-        push edx  ; edx -> stack
-        
+         jmp done
+         
+next2    cmp ecx, 2  ; ecx - 2           ; OF SF ZF AF PF CF affected
+         jne next3   ; jump if not equal ; ZF = 0
+         
+         push edx  ; edx -> stack
+         
 ;        esp -> [edx][ret]
 
-        jmp done
-        
-next3    sub ecx, 2  ; ecx -= 2
+         jmp done
+         
+next3    sub ecx, 2  ; ecx = ecx - 2
 
-shift    mov eax, ebx  ; a = b
-        mov ebx, edx  ; b = d
-        add eax, ebx  ; a += b
-        mov edx, eax  ; d = a + b
-        
-        loop shift
-        
-        push edx  ; edx -> stack
+shift    mov eax, ebx  ; eax = ebx
+         mov ebx, edx  ; ebx = edx
+         add edx, eax  ; edx = edx + eax
+
+         loop shift
+         
+         push edx  ; edx -> stack
 
 ;        esp -> [edx][ret]
 
 done:
 
-        call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+         call getaddr
 format:
-        db "fibo(n) = %d", 0xA, 0
+         db "fibo = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][edx][ret]
 
-        call [ebp+3*4]  ; printf('Hello World!\n');
-        add esp, 2*4    ; esp = esp + 16
+         call [ebp+3*4]  ; printf(format, edx);
+         add esp, 2*4  ; esp = esp + 8
 
 ;        esp -> [ret]
 
-        push 0          ; esp -> [0][ret]
-        call [ebp+0*4]  ; exit(0);
+         push 0          ; esp -> [0][ret]
+         call [ebp+0*4]  ; exit(0);
 
 ; asmloader API
 ;
@@ -101,7 +100,7 @@ getaddr:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrï¿½ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387

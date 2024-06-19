@@ -1,14 +1,15 @@
          [bits 32]
 
-;        esp -> [ret] ; ret - adres powrotu do asmloader
+;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-n        equ 3
+n        equ 5
 
-         mov ecx, n  ; ecx = n ; mov instruction does not affect flags
+         mov ecx, n  ; ecx = n
+         
          mov eax, 1  ; eax = 1
-
-         test ecx, ecx  ; ecx & ecx    ; ZF affected
-         jz done        ; jump if zero ; jump if ZF = 1
+         
+         test ecx, ecx  ; ecx & 0  ; OF=0 SF ZF PF CF=0 affected
+         jz done        ; jump if zero  ; ZF = 1
 
 petla    mul ecx  ; edx:eax = eax*ecx
 
@@ -16,24 +17,24 @@ petla    mul ecx  ; edx:eax = eax*ecx
 
          loop petla
 
-done     push eax
+done     push eax  ; eax -> stack
 
 ;        esp -> [eax][ret]
 
-         call getaddr
-format:
-         db "silnia = %u", 0xA, 0
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+format: 
+         db "silnia = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf("silnia = %u\n", eax);
-         add esp, 2*4    ; esp = esp + 8
+         call [ebx+3*4]  ; printf("silnia = %d\n", eax);
+         add esp, 2*4      ; esp = esp + 8
 
 ;        esp -> [ret]
 
-         push 0         ; esp -> [0][ret]
-         call [ebx+0*4] ; exit(0);
+         push 0          ; esp -> [0][ret]
+         call [ebx+0*4]  ; exit(0);
 
 ; asmloader API
 ;
@@ -51,7 +52,17 @@ getaddr:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrÃ³ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387
+
+%ifdef COMMENT
+
+ebx    -> [ ][ ][ ][ ] -> exit
+ebx+4  -> [ ][ ][ ][ ] -> putchar
+ebx+8  -> [ ][ ][ ][ ] -> getchar
+ebx+12 -> [ ][ ][ ][ ] -> printf
+ebx+16 -> [ ][ ][ ][ ] -> scanf
+
+%endif

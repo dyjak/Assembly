@@ -1,6 +1,6 @@
         [bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;       esp -> [ret]  ; ret - adres powrotu do asmloader
 
 %ifdef COMMENT
 0   1   2   3   4   5   6    indeksy
@@ -18,49 +18,48 @@ a = b              ; a = 1
 b = a + d = b + d  ; b = 1 + 1 = 2
 %endif
 
-n        equ 7
+n       equ 0
 
         mov ebp, ebx  ; ebp = ebx
-        
-        mov ecx, n  ; ecx = n
 
+        mov ecx, n ;  ecx = n
+        
         mov eax, 1  ; eax = 1
         mov ebx, 1  ; ebx = 1
 
-        test ecx, 1  ; ecx - 0
-        jle next   ; jump if not equal
-
-        push eax
-;        esp -> [eax][ret]
+        test ecx, ecx  ; ecx - 0           ; OF SF ZF AF PF CF affected
+        jae next    ; jump if above or equal ; jump if CF = 0 or ZF = 1
 
         jmp done
 
-next    sub ecx, 1  ; ecx -= 1
+next    dec ecx  ; ecx--
 
-shift   mov edx, eax  ; d = a
-        mov eax, ebx  ; a = b
-        add ebx, edx  ; d += b
+shift   mov edx, eax  ; edx = eax
+        mov eax, ebx  ; eax = edx
+        add ebx, edx  ; ebx = ebx + edx
 
         loop shift
+        
+        push ebx  ; ebx -> stack
 
-done:   push ebx  ; edx -> stack
+;       esp -> [ebx][ret]
 
-;        esp -> [ebx][ret]
+done:
 
-        call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+        call getaddr  ; push on the stack runtime address of format and jump to get address
 format:
-        db "fibo(n) = %d" , 0xA, 0
+        db "fibo = %d", 0xA, 0
 getaddr:
 
-;        esp -> [format][ebx][ret]
+;       esp -> [format][ebx][ret]
 
-        call [ebp+3*4]  ; printf(format, ebx);
+        call [ebp+3*4]  ; printf(format, ebx)
         add esp, 2*4    ; esp = esp + 8
 
-;        esp -> [ret]
+;       esp -> [ret]
 
         push 0          ; esp -> [0][ret]
-        call [ebp+0*4]  ; exit(0);
+        call [ebp+0*4]  ; exit(0)
 
 ; asmloader API
 ;
@@ -78,7 +77,7 @@ getaddr:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrï¿½ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387

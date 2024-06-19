@@ -1,41 +1,36 @@
-         [bits 64]
+[bits 64]
 
-extern   printf
-extern   exit
+a        equ 4294967295
+b        equ 1
 
-section  .data
+section .data
+format:
+         db 'suma = %llu', 0xA, 0
 
-format   db "a", 0xA, 0
-section .bss
+section .text
+global _start
 
-section  .text
+_start:
 
-a      equ 1
+         mov eax, a      ; RAX = a
+         xor rdx, rdx    ; Zero-extend RAX to 64 bits (RDX:RAX = a)
+         mov ecx, b      ; RCX = b
+         xor rbx, rbx    ; Zero-extend RCX to 64 bits (RBX:RCX = b)
 
-global   main
+         add rax, rcx    ; RAX = RAX + RCX
+         adc rdx, rbx    ; RDX = RDX + RBX + CF
 
-main:
+         lea rdi, [format]  ; Load address of the format string
+         mov rsi, rax        ; Load the lower 4 bytes of the result
+         mov rdx, rdx        ; Load the higher 4 bytes of the result
 
-;       rsp -> [ret]
+         ; Write the result to stdout
+         mov rax, 1       ; System call number for write (1)
+         mov rdi, 1       ; File descriptor for stdout (1)
+         mov rdx, 21      ; Length of the output string
+         syscall
 
-;       rcx, rdx, r8, r9, stack
-;       rdi, rsi, rdx, rcx, r8, r9, stack
-
-        mov rdi, format  ; rcx = format
-
-        call printf  ; printf(format, a, b, suma);
-
-        add rsp, 4*8  ; rsp = rsp + 32
-
-;       rsp -> [ret]
-
-        ret
-
-
-
-%ifdef COMMENT
-
-nasm add6.asm -o add6.o -f win64
-gcc add6.o -o add6.exe -m64
-
-%endif
+         ; Exit
+         mov rax, 60      ; System call number for exit (60)
+         xor rdi, rdi     ; Exit status (0)
+         syscall

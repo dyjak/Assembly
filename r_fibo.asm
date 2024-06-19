@@ -1,15 +1,7 @@
 %ifdef COMMENT
-fibo(n) = 1 + 1 + 2 + ... + n-1 + n-2
-
-fibo(0) = 1
-fibo(n) = fibo(n-1) + fibo(n-2)
-
 fibo(0) = 1
 fibo(1) = 1
-fibo(2) = 2
-fibo(3) = 3
-fibo(4) = 5
-fibo(5) = 8
+fibo(n) = fibo(n-1) + fibo(n-2)
 %endif
 
          [bits 32]
@@ -20,7 +12,7 @@ n        equ 6
 
          mov ecx, n  ; ecx = n
 
-         call fibo   ; eax = fibo(ecx) ; fastcall
+         call fibo  ; eax = fibo(ecx) ; fastcall
 
 addr:
 
@@ -32,12 +24,12 @@ addr:
 
          call getaddr
 format:
-         db "fibo(n) = %i", 0xA, 0
+         db "fibo = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf("fibo = %i\n", eax);
+         call [ebx+3*4]  ; printf("silnia = %d\n", eax);
          add esp, 2*4    ; esp = esp + 8
 
 ;        esp -> [ret]
@@ -47,48 +39,46 @@ getaddr:
 
 ;        eax fibo(ecx)
 
-fibo     cmp ecx, 0    ; ecx - 0           ; ZF affected
-         jne next       ; jump if not equal ; jump if ZF = 0
-         mov eax, 1  ; eax = ecx = 0
+fibo     cmp ecx, 0  ; ecx - 0           ; ZF affected
+         jne next    ; jump if not equal ; jump if ZF = 0
+         mov eax, 1  ; eax = 1
          ret
 
-next     cmp ecx, 1
-         jne rec
-         mov eax, ecx
+next     cmp ecx, 1    ; ecx - 1           ; ZF affected
+         jne rec       ; jump if not equal ; jump if ZF = 0
+         mov eax, ecx  ; eax = ecx = 1
          ret
 
 rec      dec ecx       ; ecx = ecx - 1 = n-1
-         push ecx      ; ecx -> stack = n - 1
-         call fibo     ; eax = fibo(n-1)
-         pop ecx       ; ecx <- stack = n - 1
-         dec ecx       ; ecx = ecx - 1 = n - 2
+         call fibo     ; eax = fibo(ecx) = fibo(n-1)
          push eax      ; eax -> stack = fibo(n-1)
-         call fibo     ; eax = fibo(n-2)
-         pop ecx       ; ecx <- stack = fibo(n-1)
-         add eax, ecx  ; eax = ecx + eax = fibo(n-1) + fibo(n-2)
+         dec ecx       ; ecx = ecx - 1 = n-2
+         call fibo     ; eax = fibo(ecx) = fibo(n-2)
+         pop edx       ; edx <- stack = fibo(n-1)
+         add eax, edx  ; eax = eax + edx = fibo(n-2) + fibo(n-1)
+         add ecx, 2    ; ecx = ecx + 2
          ret
 
-; fibo(0) = 1
-; fibo(1) = 1
-; fibo(n) = fibo(n-1) + fibo(n-2)
+;        fibo(0) = 1
+;        fibo(1) = 1
+;        fibo(n) = fibo(n-1) + fibo(n-2)
 
 %ifdef COMMENT
-eax = suma(ecx)
+eax = fibo(ecx)
 
-* fibo(2) =           * fibo(1) = 2
-  ecx = ecx - 1 =       ecx = ecx - 1 = 1
-  ecx -> stack =        ecx -> stack = 1
-  eax = fibo(1) =       eax = fibo(1) = 1
-  ecx <- stack =        ecx <- stack = 1
-  ecx = ecx - 1 =       ecx = ecx - 1 = 0
-  eax -> stack          eax -> stack
+* fibo(2) =           * fibo(2) = 2
+  ecx = ecx - 1 = 1     ecx = ecx - 1 = 1
+  eax = fibo(1) =       eax = fibo(0) = 1
+  eax -> stack =        eax -> stack = 1
+  ecx = ecx - 1 = 0     ecx = ecx - 1 = 0
   eax = fibo(0) =       eax = fibo(0) = 1
-  ecx <- stack =        ecx <- stack = 1
-  eax = eax + ecx =     eax = eax + ecx = fibo(0) + fibo(1) = 2
-  return eax =          return eax = 1
+  edx <- stack =        edx <- stack = 1
+  eax = eax + edx       eax = eax + edx = 1 + 1 = 2
+  ecx = ecx + 2 = 2     ecx = ecx + 2 = 2
+  return eax =          return eax = 2
 
 * fibo(1) =           * fibo(1) = 1
-  eax = ecx = 1         eax = ecx = 1
+  eax = ecx = 1         eax = 1
   return eax = 1        return eax = 1
   
 * fibo(0) =           * fibo(0) = 1

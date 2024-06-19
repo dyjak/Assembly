@@ -1,57 +1,46 @@
-         [bits 32]
+[bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;       esp -> [ret]  ; ret - return address
 
-%define  UINT_MAX 4294967295
+a        equ 4
+b        equ -5
+c        equ 6
 
-%define  INT_MIN -2147483648
-%define  INT_MAX  2147483647
-
-a        equ -1
-b        equ 1
-c        equ -2147483648
-
-;        exp = -1 + 1*(-2147483648) = -1 - 2147483648 = -2147483649
-
+;          0:eax
+;        + 0:esi
+;        -------
+;        edi:esi
+  
          mov eax, b  ; eax = b
-         mov ecx, c  ; ecx = c
+         mov esi, c  ; ecx = c
+  
+         imul esi  ; edx:eax = eax * ecx
 
-;        imul arg  ; edx:eax = eax*arg
+         mov esi, a  ; ecx = a
 
-         imul ecx  ; edx:eax = eax*ecx
+         cdq         ; edx:eax = eax  ; signed conversion
 
-         sub esp, 2*4  ; esp = esp - 8
-
-;        esp -> [suma_l][suma_h][ret]
-
-         cdq  ; edx:eax = eax ; signed conversion
-
-         mov esi, eax  ; esi = eax
-         mov edi, edx  ; edi = edx
-
-         mov eax, a  ; eax = a
-
-         cdq  ; edx:eax = eax ; signed conversion
-         
-         clc           ; CF = 0
-         adc eax, esi  ; eax = eax + esi + CF
+         mov edi, 0  ; edi = 0
+         add eax, esi  ; eax = eax + ecx
          adc edx, edi  ; edx = edx + edi + CF
-         
-         mov [esp], eax    ; *(int*)(esp) = eax
-         mov [esp+4], edx   ; *(int*)(esp+4) = edx
-
-         call getaddr  ; push on the stak the run-time address of format and jump to get address
+  
+         push edx  ; edx -> stack
+         push eax  ; eax -> stack
+  
+;        esp -> [eax][edx][ret]
+  
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
 format:
-         db "wynik = %lld",0xA,0
+         db 'wynik = %lld', 0xA, 0
 getaddr:
-
+  
 ;        esp -> [format][eax][edx][ret]
-
-         call [ebx+3*4]  ; printf("wynik = %lld\n", eax, edx);
+  
+         call [ebx+3*4]  ; printf(format, edx:eax);
          add esp, 3*4    ; esp = esp + 12
 
 ;        esp -> [ret]
-
+  
          push 0          ; esp -> [0][ret]
          call [ebx+0*4]  ; exit(0);
 

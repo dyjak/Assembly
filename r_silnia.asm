@@ -1,15 +1,8 @@
 %ifdef COMMENT
-silnia(n) = 1 * 2 * ... * n
-
-0! = 1
-n! = n*(n-1)!
-
-silnia(0) = 0
-silnia(n) = n * silnia(n-1)
+silnia(n) = 1*1*2*...*n
 
 silnia(0) = 1
-silnia(1) = 1
-silnia(2) = 2
+silnia(n) = n*silnia(n-1)
 %endif
 
          [bits 32]
@@ -20,7 +13,7 @@ n        equ 3
 
          mov ecx, n  ; ecx = n
 
-         call silnia   ; eax = silnia(ecx) ; fastcall
+         call silnia  ; eax = silnia(ecx) ; fastcall
 
 addr:
 
@@ -32,12 +25,12 @@ addr:
 
          call getaddr
 format:
-         db "silnia = %i", 0xA, 0
+         db "silnia = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf("suma = %i\n", eax);
+         call [ebx+3*4]  ; printf("silnia = %d\n", eax);
          add esp, 2*4    ; esp = esp + 8
 
 ;        esp -> [ret]
@@ -47,22 +40,22 @@ getaddr:
 
 ;        eax silnia(ecx)
 
-silnia   cmp ecx, 0    ; ecx - 0           ; ZF affected
-         jne rec       ; jump if not equal ; jump if ZF = 0
-         mov eax, 1    ; eax = 1
+silnia   cmp ecx, 0  ; ecx - 0           ; ZF affected
+         jne rec     ; jump if not equal ; jump if ZF = 0
+         mov eax, 1  ; eax = 1
          ret
 
-rec      push ecx      ; ecx -> stack = n
-         dec ecx       ; ecx = ecx - 1 = n-1
-         call silnia   ; eax = silnia(ecx) = silnia(n-1)
-         pop ecx       ; ecx <- stack = n
-         mul ecx       ; eax = eax * ecx = silnia(n-1) * n
+rec      push ecx     ; ecx -> stack = n
+         dec ecx      ; ecx = ecx - 1 = n-1
+         call silnia  ; eax = silnia(ecx) = silnia(n-1)
+         pop ecx      ; ecx <- stack = n
+         mul ecx      ; eax = eax*ecx = silnia(n-1)*n
          ret
-         
+
 ;        mul arg  ; edx:eax = eax*arg
 
 ; silnia(0) = 1
-; silnia(n) = n * silnia(n-1)
+; silnia(n) = n*silnia(n-1)
 
 %ifdef COMMENT
 eax = silnia(ecx)
@@ -72,7 +65,7 @@ eax = silnia(ecx)
   ecx = ecx - 1 = 0     ecx = ecx - 1 = 0
   eax = silnia(0) =     eax = silnia(0) = 1
   ecx <- stack = 1      ecx <- stack = 1
-  eax = eax * ecx =     eax = eax * ecx = 1 * 1 = 1
+  eax = eax*ecx =       eax = eax*ecx = 1*1 = 1
   return eax =          return eax = 1
 
 * silnia(0) =         * silnia(0) = 1

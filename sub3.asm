@@ -2,39 +2,48 @@
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-a        equ 10
-b        equ 5
+a        equ 4
+b        equ -5
 
-         call getaddr_b
-define_b:
+         mov eax, a  ; eax = a
+
+          call getaddr
+addr_b:
          dd b  ; define double word
-getaddr_b:
-
-;        esp -> [define_b][ret]
-
-         mov eax, a            ; eax = a
-         mov ecx, [esp]        ; ecx = b
-         sub eax, dword [ecx]  ; eax = eax - *(int*)ecx
-
-         push eax
-
-;        esp -> [eax][define_b][ret]
-
-         call getaddr  ; push on the stack the run-time addr of format and jump to get address
-format:
-         db "roznica = %d", 0xA, 0
 getaddr:
 
-;        esp -> [format][eax][define_b][ret]
+;        esp -> [addr_b][ret]
 
-         call [ebx+3*4]  ; pritnf("roznica = %d\n", a)
-         add esp, 3*4    ; esp = esp + 12
+         mov ecx, [esp]  ; ecx = *(int*)esp = addr_b
 
-;        esp -> [format]
+         push dword [ecx]  ; *(int*)ecx = *(int*)addr_b = b -> stack
+         
+;        esp -> [b][addr_b][ret]
 
-         push 0          ; esp -> [00 00 00 00][ret]
+         pop ecx  ; b -> ecx
+         
+;        esp -> [addr_b][ret]
+
+         sub eax, ecx  ; eax = eax + ecx
+
+         push eax  ; eax -> stack
+         
+;        esp -> [eax][addr_b][ret]
+
+         call getaddr2  ; push on the stack runtime address of format and jump to get address
+format2:
+         db "a = %d", 0xA, 0
+getaddr2:
+
+;        esp -> [format][eax][addr_b][ret]
+
+         call [ebx+3*4]  ; printf(format, eax);
+         add esp, 2*4    ; esp = esp + 8
+
+;        esp -> [ret]
+
+         push 0          ; esp -> [0][ret]
          call [ebx+0*4]  ; exit(0);
-
 
 ; asmloader API
 ;

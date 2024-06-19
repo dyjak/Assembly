@@ -2,29 +2,30 @@
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-a        equ 5
-b        equ 6
-
+a        equ 4
+b        equ -5
+         
          mov eax, a  ; eax = a
-         sub eax, b  ; eax = eax - b
 
-         push eax
+         sub eax, b  ; eax = eax + b
+         
+         push eax  ; esp -> stack
 
 ;        esp -> [eax][ret]
 
-         call getaddr  ; push on the stack the runtime address of format and jump to that address
+         call getaddr
 format:
-         db "roznica = %d", 0xA, 0
+         db "suma = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf("roznica = %d\n", b);
-         add esp, 2*4      ; esp = esp + 2*4
+         call [ebx+3*4]  ; printf(format, eax);
+         add esp, 2*4    ; esp = esp + 8
 
 ;        esp -> [ret]
 
-         push 0          ; esp -> [0][ret] <- to jest na 4 bajtach
+         push 0          ; esp -> [0][ret]
          call [ebx+0*4]  ; exit(0);
 
 ; asmloader API

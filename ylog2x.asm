@@ -1,38 +1,58 @@
-        [bits 32]
-        
-;        FYL2X  st(1) := st(1)*log2[st(0)] i zdejmij
+         [bits 32]
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-x       equ __?float32?__(256.0)
-y       equ __?float32?__(2.0)
+x        equ __?float64?__(256.0)
 
-        finit
+         sub esp, 2*4  ; esp = esp - 8 ; make room for double type result
 
-        push y
-        ; esp -> [y][ret] 
-        fld dword [esp]
-        add esp, 1*4
+;        esp -> [ ][ ][ret]
 
-        push x
-        ; esp -> [x][ret] 
-        fld dword [esp]
-        add esp, 1*4
+         call getaddr  ; get the runtime address of format
 
-        fyl2x
+format   db "log2 = %f", 0xA, 0
+length   equ $ - format
 
-        sub esp, 2*4
-        fstp qword [esp]
-        ; esp -> [wyn_l][wyn_h][ret] 
+addr_y   dq 1.0  ; define quad word
+addr_x   dq x
 
-        call end
-format:
-        db "log2(x) = %f", 0xA, 0
-end:
-        call [ebx+3*4]
+getaddr:
 
-        push 0
-        call [ebx+0*4]
+;        esp -> [format][ ][ ][ret]
+
+;        FYL2X       st(1) := st(1)*log2[st(0)] i zdejmij
+
+         finit  ; fpu init
+
+;        st = []
+
+         mov eax, [esp]   ; eax = *(int*)esp = format
+         add eax, length  ; eax = eax + length = format + length = addr_y
+
+         fld qword [eax]  ; *(double*)eax = *(double*)addr_y = 1 -> st ; fpu load floating-point
+
+;        st = [st0] = [1]  ; fpu stack
+
+         fld qword [eax+8]  ; *(double*)(eax+8) = *(double*)addr_x = x -> st ; fpu load floating-point
+
+;        st = [st0, st1] = [x, 1]  ; fpu stack
+
+         fyl2x
+
+;                       +4
+;        esp -> [format][ ][ ][ret]
+
+         fstp qword [esp+4]  ; *(double*)(esp+4) <- st = [sqrt(x)]  ; fpu store top element
+                                                                    ; and pop fpu stack
+;        st = []  ; fpu stack
+
+         call [ebx+3*4]  ; printf("sqrt = %f\n", *(double*)(esp+4));
+         add esp, 3*4    ; esp = esp + 12
+
+;        esp -> [ret]
+
+         push 0         ; esp -> [0][ret]
+         call [ebx+0*4] ; exit(0);
 
 ; asmloader API
 ;
@@ -50,7 +70,7 @@ end:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrï¿½ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387

@@ -6,27 +6,30 @@ n        equ 3
 
          mov ecx, n  ; ecx = n
 
-petla    push ecx  ; *(int*)(esp-4) = ecx ; esp = esp - 4
+.loop    push ecx  ; ecx -> stack
 
 ;        esp -> [ecx][ret]
 
-         call getaddr
-format:
-         db "i = %i", 0xA, 0
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+format: 
+         db "i = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][ecx][ret]
 
-         call [ebx+3*4]  ; printf("i = %i\n", ecx); // funkcja printf modyfikuje rejestr ecx
-         adc esp, 1*4    ; esp = esp + 4
-
+         call [ebx+3*4]  ; printf(format);
+         add esp, 4      ; esp = esp + 4
+         
 ;        esp -> [ecx][ret]
 
-         pop ecx  ; ecx = *(int*)esp ; esp = esp + 4
+         pop ecx  ; ecx <- stack
 
 ;        esp -> [ret]
+         
+;         dec ecx     ; ecx--
+;         jne .loop   ; jump if not equal  ; ZF = 0
 
-         loop petla 
+         loop .loop 
 
          push 0          ; esp -> [0][ret]
          call [ebx+0*4]  ; exit(0);
@@ -47,7 +50,17 @@ getaddr:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrÃ³ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387
+
+%ifdef COMMENT
+
+ebx    -> [ ][ ][ ][ ] -> exit
+ebx+4  -> [ ][ ][ ][ ] -> putchar
+ebx+8  -> [ ][ ][ ][ ] -> getchar
+ebx+12 -> [ ][ ][ ][ ] -> printf
+ebx+16 -> [ ][ ][ ][ ] -> scanf
+
+%endif

@@ -2,24 +2,24 @@
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-liczba   equ -19
+liczba   equ -5
 
          mov eax, liczba  ; eax = liczba
-         mov edx, eax     ; edx = eax = liczba
-
-         test eax, eax  ;                       ; OF SF ZF AF PF CF affected
-         jns nieujemna  ; jump if sign not set  ; SF = 0
+         mov edx, eax     ; edx = eax
+         
+         test eax, eax    ; eax && eax ; OF SF ZF AF PF CF affected
+         jge nieujemna  ; jump if greater or equal ; jump if SF == OF or ZF = 1
 
          neg edx  ; edx = -edx
 
 nieujemna:
 
-         push edx
-         push eax
-
+         push edx  ; edx -> stack
+         push eax  ; eax -> stack
+         
 ;        esp -> [eax][edx][ret]
-
-         call getaddr
+         
+         call getaddr  ; push on the stack runtime address of format and jump to get address
 format:
          db "liczba = %d", 0xA
          db "modul = %d", 0xA, 0
@@ -29,10 +29,10 @@ getaddr:
 
          call [ebx+3*4]  ; printf(format, eax, edx);
          add esp, 3*4    ; esp = esp + 12
-         
+
 ;        esp -> [ret]
 
-         push 0          ; esp ->[0][ret]
+         push 0          ; esp -> [0][ret]
          call [ebx+0*4]  ; exit(0);
 
 ; asmloader API

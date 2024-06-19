@@ -2,47 +2,38 @@
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-%define  UINT_MAX 4294967295
-
-%define  INT_MIN -2147483648
-%define  INT_MAX  2147483647
-
 a        equ 4
-b        equ 5
-c        equ 6
+b        equ 6
+c        equ 7
 
-;        exp = a + b*c = 4 + 5*6 = 34
+;          0:eax
+;        + 0:esi
+;        -------
+;        edi:esi
 
          mov eax, b  ; eax = b
-         mov ecx, c  ; ecx = c
+         mov esi, c  ; ecx = c
 
-;        mul arg  ; edx:eax = eax*arg
+         mul esi  ; edx:eax = eax*ecx
 
-         mul ecx  ; edx:eax = eax*ecx
+         mov esi, a  ; ecx = a
 
-         sub esp, 2*4  ; esp = esp - 8
+         mov edi, 0  ; edi = 0
+         add esi, eax  ; eax = eax + ecx
 
-;        esp -> [suma_l][suma_h][ret]
+         push edi  ; edi -> stack
+         push esi  ; esi -> stack
 
-         clc  ; CF = 0
-         
-         mov ecx , a  ; ecx = a
-         adc eax, ecx  ; eax = eax + ecx + CF
+;        esp -> [esi][edi][ret]
 
-         mov [esp], eax  ; *(int*)(esp) = eax
-
-         adc edx, 0  ; edx = edx + 0 + CF
-
-         mov [esp+4], edx  ; *(int*)(esp+4) = edx
-
-         call getaddr  ; push on the stak the run-time address of format and jump to get address
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
 format:
-         db "wynik = %llu",0xA,0
+         db 'wynik = %llu', 0xA, 0
 getaddr:
 
-;        esp -> [format][eax][edx][ret]
+;        esp -> [format][esi][edi][ret]
 
-         call [ebx+3*4]  ; printf("wynik = %llu\n", eax, edx);
+         call [ebx+3*4]  ; printf(format, edi:esi);
          add esp, 3*4    ; esp = esp + 12
 
 ;        esp -> [ret]

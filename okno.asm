@@ -1,63 +1,52 @@
          [bits 32]
 
-a        equ 18
-b        equ 99
-x        equ 0
+;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-;        esp -> [ret]
+liczba   equ 25
 
-         mov eax, a  ; eax = a
-         mov ecx, b  ; ecx = b
-         mov edx, x  ; edx = x
+         mov eax, liczba  ; eax = liczba
+         
+         push eax  ; eax -> stack
+         
+;        esp -> [eax][ret]
 
-         push ecx
-         push eax
-         push edx
+         cmp eax, 99     ; eax - 99 ; OF SF ZF AF PF CF affected
+         jg poza  ; jump if greater or equal ; jump if SF == OF or ZF = 1
 
-;        esp -> [edx][eax][ecx][ret]
+         cmp eax, 18     ; eax - 99 ; OF SF ZF AF PF CF affected
+         jl poza         ; jump if less                 ; jump if SF != OF
 
-         cmp edx, eax  ; cmp x, a
-greater_a:
-
-         je less_b      ; x = a
-         jg less_b      ; x > a
-         jmp not_equal  ; x < a
-less_b:
-
-         cmp edx, ecx  ; cmp x, b
-
-         jg not_equal  ; x > b
-
-         call getaddr1
+         
+         
+         call getaddr1  ; push on the stack the runtime address of format and jump to getaddr
 format1:
-
-         db "%d nalezy do [%d, %d]", 0xA, 0
+         db "%d nalezy do [18,99]", 0xA, 0
 getaddr1:
 
-;        esp -> [format1][edx][eax][ecx][ret]
+;        esp -> [format1][eax][ret]
 
-         call [ebx+3*4]  ; printf(format1, edx, eax, ecx);
+         call [ebx+3*4]  ; printf(format1, eax);
+         add esp, 2*4    ; esp = esp + 8
+         
+         jmp always  ; jump always
 
-         jmp exit
-
-not_equal:
-
-         call getaddr2
+poza:
+         
+         call getaddr2  ; push on the stack the runtime address of format and jump to getaddr
 format2:
-
-         db "%d nie nalezy do [%d, %d]", 0xA, 0
+         db "%d nie nalezy do [18,99]", 0xA, 0
 getaddr2:
 
-;        esp -> [format2][edx][eax][ecx][ret]
+;        esp -> [format2][eax][ret]
 
-         call [ebx+3*4]  ; printf(format2, edx, eax, ecx);
-exit:
-
-         add esp, 4*4    ; esp = esp + 16
+         call [ebx+3*4]  ; printf(format, eax);
+         add esp, 2*4    ; esp = esp + 8
 
 ;        esp -> [ret]
 
-         push 0          ; esp ->[0][ret]
+always:
+
+         push 0          ; esp -> [0][ret]
          call [ebx+0*4]  ; exit(0);
 
 ; asmloader API

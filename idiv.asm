@@ -2,31 +2,30 @@
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-a        equ -2147483648
+a        equ -9223372036854775808
 b        equ -3
 
          mov eax, a  ; eax = a
-         mov ecx, b  ; edx = b
 
-         cdq         ; edx:eax = eax ; signed conversion 
-         idiv ecx    ; eax = edx:eax / ecx
-                     ; edx = edx:eax % ecx
+         cdq  ; edx:eax = eax  ; signed conversion
 
-;        idiv arg    ; eax = edx:eax / arg
-                     ; edx = edx:eax % arg
+         mov ecx, b  ; ecx = b
 
-                     ; eax - iloraz
-                     ; edx - reszta
+         idiv ecx    ; eax = edx:eax / ecx  ; iloraz
+                     ; edx = edx:eax % ecx  ; reszta
 
-         push edx
-         push eax
+;        div arg     ; eax = edx:eax / arg  ; iloraz
+                     ; edx = edx:eax % arg  ; reszta
+
+         push edx  ; edx -> stack
+         push eax  ; eax -> stack
 
 ;        esp -> [eax][edx][ret]
 
-         call getaddr
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
 format:
-         db "iloraz = %d", 0xA
-         db "reszta = %d", 0xA, 0
+         db "iloraz = %lld", 0xA
+         db "reszta = %lld", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][edx][ret]
@@ -55,7 +54,17 @@ getaddr:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrÃ³ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387
+
+%ifdef COMMENT
+
+ebx    -> [ ][ ][ ][ ] -> exit
+ebx+4  -> [ ][ ][ ][ ] -> putchar
+ebx+8  -> [ ][ ][ ][ ] -> getchar
+ebx+12 -> [ ][ ][ ][ ] -> printf
+ebx+16 -> [ ][ ][ ][ ] -> scanf
+
+%endif

@@ -1,52 +1,51 @@
-         [bits 32]
+       [bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;        esp -> [ret]  ; ret - return address
 
-a        equ 1
-b        equ 2
-c        equ 3
-d        equ 4
+a        equ 4
+b        equ 5
+c        equ 6
+d        equ 7
 
-;        exp = a*b + c*d = 2 + 12 = 14
+;           0:eax
+;         + 0:esi
+;         -------
+;         edi:esi
 
-         mov eax, a  ; eax = a
-         mov ecx, b  ; ecx = b
+          mov eax, a  ; eax = a
+          mov esi, b  ; esi = b
 
-;        mul arg  ; edx:eax = eax*arg
+          mul esi  ; eax = eax * esi
 
-         mul ecx  ; edx:eax = eax*ecx
+          push eax  ; eax -> stack
 
-         mov esi, eax  ; esi = eax
+          mov eax, c  ; eax = c
+          mov esi, d  ; esi = d
 
-         mov eax, c  ; eax = c
-         mov ecx, d  ; ecx = d
-         
-;        mul arg  ; edx:eax = eax*arg
+          mul esi  ; eax = eax * esi
 
-         mul ecx  ; edx:eax = eax*ecx
+          pop esi  ; esi <- stack
 
-         mov edi, eax  ; edi = eax
+          add eax, esi  ; eax = eax + esi
 
-         add esi, edi  ; esi = esi + edi
+          push eax  ; eax -> stack
 
-         push esi
+;         esp -> [eax][ret]
 
-;        esp -> [esi][ret]
-
-         call getaddr  ; push on the stack the runtime address of format and jump to that address
+          call getaddr  ; push on the stack the runtime address of format and jump to getaddr
 format:
-         db "wynik = %u", 0xA, 0
+          db 'wynik = %u', 0xA, 0
 getaddr:
 
-;        esp -> [format][esi][ret]
+;         esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf("wynik = %u\n", esi);
-         add esp, 2*4    ; esp = esp + 8
+          call [ebx+3*4]  ; printf(format, eax);
+          add esp, 2*4    ; esp = esp + 8
 
-;        esp -> [ret]
+;         esp -> [ret]
 
-         push 0          ; esp -> [0][ret] <- to jest na 4 bajtach
-         call [ebx+0*4]  ; exit(0);
+          push 0          ; esp -> [0][ret]
+          call [ebx+0*4]  ; exit(0);
 
 ; asmloader API
 ;

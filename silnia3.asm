@@ -1,46 +1,38 @@
-[bits 32]
+         [bits 32]
 
 ;        esp -> [ret]  ; ret - adres powrotu do asmloader
 
-n        equ 5
+n        equ 6
 
          mov ecx, n  ; ecx = n
+         
          mov eax, 1  ; eax = 1
 
-         test ecx, ecx  ; ecx & ecx          ;  OF=0 SF ZF PF CF=0 affected
+petla    test ecx, ecx  ; ecx & 0  ; OF=0 SF ZF PF CF=0 affected
+         jz done        ; jump if zero  ; ZF = 1
 
-         je done        ; jump if equal ; ZF = 1
-
-         cmp ecx, 1  ; ecx & 1            ;  OF=0 SF ZF PF CF=0 affected
-
-         je done     ; jump if equal ; ZF = 1
-
-
-petla    mul ecx  ; edx:eax = eax*ecx
+         mul ecx  ; edx:eax = eax*ecx
 
 ;        mul arg  ; edx:eax = eax*arg
 
-         cmp ecx, 1  ; ecx & 1         ;  OF=0 SF ZF PF CF=0 affected
+         sub ecx, 2  ; ecx = ecx - 2
 
-         je done  ; jump if not equal  ; ZF = 0
+         cmp ecx, 0
+         jge petla  ; jump if greater or equal ; jump if SF == OF or ZF = 1
 
-         dec ecx  ; ecx--
+done     push eax  ; eax -> stack
 
-         loop petla
-
-done     push eax
-         
 ;        esp -> [eax][ret]
 
-         call getaddr  ; push on the stak the run-time address of format and jump to get address
-format:
-         db "silnia = %u", 0xA, 0
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+format: 
+         db "silnia = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf(format, eax);
-         add esp, 2*4    ; esp = esp + 8
+         call [ebx+3*4]  ; printf("silnia = %d\n", eax);
+         add esp, 2*4      ; esp = esp + 8
 
 ;        esp -> [ret]
 

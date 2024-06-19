@@ -1,6 +1,6 @@
          [bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;        esp -> [ret]
 
 %ifdef COMMENT
 a   b      a+2b
@@ -20,52 +20,41 @@ Schemat obliczeñ:
 
 %endif
 
-n        equ 6
+n        equ 3
 
          mov ebp, ebx  ; ebp = ebx
          
          mov ecx, n  ; ecx = n
-
+         
          mov eax, 1  ; eax = 1
          mov ebx, 1  ; ebx = 1
 
-         cmp ecx, 0  ; ecx - 0
-         jne next1   ; jump if not equal
-         
-         push eax  ; eax -> stack
-         
-;        esp -> [eax][ret]
-
-         jmp done
-         
-next1    cmp ecx, 1  ; ecx - 1
-         jne next2   ; jump if not equal
-         
-         push ebx  ; ebx -> stack
-
-;        esp -> [eax][ret]
+         cmp ecx, 2  ; ecx - 0           ; OF SF ZF AF PF CF affected
+         jae next    ; jump if above or equal ; jump if CF = 0 or ZF = 1
 
          jmp done
 
-next2    sub ecx, 1  ; ecx -= 1
+next     dec ecx  ; ecx--
 
-shift    xadd ebx, eax  ; (b, a) = (a+b, b)
+shift    xadd ebx, eax  ; (b, a) = (a+b, b) // wynik w rejestrze b
 
          loop shift
 
 done:    push ebx  ; edx -> stack
 
-;        esp -> [ebx][ret]
+;        esp -> [edx][ret]
 
-         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+
+
+         call getaddr
 format:
-         db "fibo(n) = %d", 0xA, 0
+         db "fibo = %d", 0xA, 0
 getaddr:
 
-;        esp -> [format][ebx][ret]
+;        esp -> [format][edx][ret]
 
-         call [ebp+3*4]  ; printf(format, ebx);
-         add esp, 2*4    ; esp = esp + 8
+         call [ebp+3*4]  ; printf(format, edx);
+         add esp, 2*4  ; esp = esp + 8
 
 ;        esp -> [ret]
 

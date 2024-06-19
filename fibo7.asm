@@ -1,6 +1,6 @@
          [bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;        esp -> [ret]
 
 %ifdef COMMENT
 a   b      a+2b
@@ -13,50 +13,48 @@ Przesuniecie ramki:
 
 xadd (b, a) = (a+b, b) // wynik w rejestrze b
 
-Schemat obliczeï¿½:
+Schemat obliczeñ:
 
                 xadd        xadd           xadd
 (a, b) -> (b, a) => (a+b, b) => (a+2b, a+b) => (2a+3b, a+2b) => ...
 
 %endif
 
-n        equ 6
+n        equ 1
 
          mov ebp, ebx  ; ebp = ebx
          
          mov ecx, n  ; ecx = n
-
+         
          mov eax, 1  ; eax = 1
          mov ebx, 1  ; ebx = 1
 
-         test ecx, 1
-         jle next
-         
-         push ebx  ; ebx -> stack
-
-;        esp -> [eax][ret]
+         test ecx, ecx  ; ecx - 0           ; OF SF ZF AF PF CF affected
+         jae next    ; jump if above or equal ; jump if CF = 0 or ZF = 1
 
          jmp done
 
-next     sub ecx, 1  ; ecx -= 1
+next     dec ecx  ; ecx--
 
-shift    xadd ebx, eax  ; (b, a) = (a+b, b)
+shift    xadd ebx, eax  ; (b, a) = (a+b, b) // wynik w rejestrze b
 
          loop shift
 
 done:    push ebx  ; edx -> stack
 
-;        esp -> [ebx][ret]
+;        esp -> [edx][ret]
 
-         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+
+
+         call getaddr
 format:
-         db "fibo(n) = %d", 0xA, 0
+         db "fibo = %d", 0xA, 0
 getaddr:
 
-;        esp -> [format][ebx][ret]
+;        esp -> [format][edx][ret]
 
-         call [ebp+3*4]  ; printf(format, ebx);
-         add esp, 2*4    ; esp = esp + 8
+         call [ebp+3*4]  ; printf(format, edx);
+         add esp, 2*4  ; esp = esp + 8
 
 ;        esp -> [ret]
 
@@ -79,7 +77,7 @@ getaddr:
 ; 3 - printf
 ; 4 - scanf
 ;
-; To co funkcja zwrï¿½ci jest w EAX.
+; To co funkcja zwróci jest w EAX.
 ; Po wywolaniu funkcji sciagamy argumenty ze stosu.
 ;
 ; https://gynvael.coldwind.pl/?id=387

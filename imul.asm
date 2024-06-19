@@ -6,24 +6,26 @@ a        equ -65535
 b        equ 2
 
          mov eax, a  ; eax = a
-         mov edx, b  ; edx = b
+         mov ecx, b  ; ecx = b
 
+;        Mnozenie bez znaku
+
+         imul ecx  ; edx:eax = eax*ecx = a*b
+         
 ;        imul arg  ; edx:eax = eax*arg
 
-         imul edx  ; edx:eax = eax*edx
-
-         push eax
-
+         push eax  ; eax -> stack
+         
 ;        esp -> [eax][ret]
 
-         call getaddr  ; push on the stack the runtime address of format and jump to that address
+         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
 format:
-         db "iloczyn = %d", 0xA, 0
+         db "a*b = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][eax][ret]
 
-         call [ebx+3*4]  ; printf("iloczyn = %d\n", eax);
+         call [ebx+3*4]  ; printf(format, eax);
          add esp, 2*4    ; esp = esp + 8
 
 ;        esp -> [ret]

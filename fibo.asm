@@ -1,6 +1,6 @@
          [bits 32]
 
-;        esp -> [ret]  ; ret - adres powrotu do asmloader
+;        esp -> [ret]
 
 %ifdef COMMENT
 0   1   2   3   4   5   6    indeksy
@@ -18,18 +18,18 @@ b = d      ; b = 2
 d = a + b  ; d = 1 + 2 = 3
 %endif
 
-n        equ 3
+n        equ 6
 
          mov ebp, ebx  ; ebp = ebx
          
-         mov ecx, n
-
+         mov ecx, n  ; ecx = n
+         
          mov eax, 1  ; eax = 1
          mov ebx, 1  ; ebx = 1
          mov edx, 2  ; edx = 2
          
-         cmp ecx, 0  ; ecx - 0
-         jne next1   ; jump if not equal
+         cmp ecx, 0  ; ecx - 0           ; OF SF ZF AF PF CF affected
+         jne next1   ; jump if not equal ; ZF = 0
          
          push eax  ; eax -> stack
          
@@ -37,31 +37,30 @@ n        equ 3
 
          jmp done
          
-next1    cmp ecx, 1  ; ecx - 1
-         jne next2   ; jump if not equal
+next1    cmp ecx, 1  ; ecx - 1           ; OF SF ZF AF PF CF affected
+         jne next2   ; jump if not equal ; ZF = 0
          
          push ebx  ; ebx -> stack
-         
-;        esp -> [eax][ret]
+
+;        esp -> [ebx][ret]
 
          jmp done
-
-next2    cmp ecx, 2  ; edc - 2
-         jne next3   ; jump if not equal
-
+         
+next2    cmp ecx, 2  ; ecx - 2           ; OF SF ZF AF PF CF affected
+         jne next3   ; jump if not equal ; ZF = 0
+         
          push edx  ; edx -> stack
          
 ;        esp -> [edx][ret]
 
          jmp done
          
-next3    sub ecx, 2  ; ecx -= 2
+next3    sub ecx, 2  ; ecx = ecx - 2
 
-shift    mov eax, ebx  ; a = b
-         mov ebx, edx  ; b = d
-         add eax, ebx  ; a += b
-         mov edx, eax  ; d = a + b
-         
+shift    mov eax, ebx  ; eax = ebx
+         mov ebx, edx  ; ebx = edx
+         add edx, eax  ; eax = eax + edx
+
          loop shift
          
          push edx  ; edx -> stack
@@ -70,15 +69,15 @@ shift    mov eax, ebx  ; a = b
 
 done:
 
-         call getaddr  ; push on the stack the runtime address of format and jump to getaddr
+         call getaddr
 format:
-         db "fibo(n) = %d", 0xA, 0
+         db "fibo = %d", 0xA, 0
 getaddr:
 
 ;        esp -> [format][edx][ret]
 
-         call [ebp+3*4]  ; printf('Hello World!\n');
-         add esp, 2*4    ; esp = esp + 16
+         call [ebp+3*4]  ; printf(format, edx);
+         add esp, 2*4  ; esp = esp + 8
 
 ;        esp -> [ret]
 
